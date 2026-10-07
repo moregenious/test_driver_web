@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="format-detection" content="telephone=no">
+  <title>Дневник смен водителя — Сводка за день</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+    <!-- Top Bar Controls (Sticky on mobile) -->
+    <header class="top-nav">
+      <div class="nav-brand">
+        <span class="taxi-icon">🚕</span>
+        <div class="brand-text">
+          <span class="brand-title">Дневник смен</span>
+          <span class="brand-badge">онлайн</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Currency Toggle -->
+        <div class="currency-toggle" title="Переключить валюту">
+          <button id="currKztBtn" class="curr-btn active" onclick="setCurrency('₸')">₸</button>
+          <button id="currRubBtn" class="curr-btn" onclick="setCurrency('₽')">₽</button>
+        </div>
+
+        <!-- Desktop Quick Add Button -->
+        <button id="openAddModalBtnDesktop" class="btn btn-primary btn-sm desktop-only">
+          ➕ Добавить
+        </button>
+
+        <!-- Share / Copy Button -->
+        <button id="shareReceiptBtn" class="btn btn-secondary btn-sm" title="Поделиться чеком или скопировать">
+          <span class="btn-icon-text">📤</span> <span class="share-btn-label">Чек</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile-Optimized Date Bar -->
+    <div class="date-bar">
+      <div class="date-stepper">
+        <button id="prevDayBtn" class="btn-icon" aria-label="Предыдущий день">◀</button>
+        <div class="date-picker-wrap">
+          <input type="date" id="shiftDateInput" class="date-picker">
+        </div>
+        <button id="nextDayBtn" class="btn-icon" aria-label="Следующий день">▶</button>
+      </div>
+      <button id="todayBtn" class="btn btn-sm btn-ghost today-btn">Сегодня</button>
+
+      <!-- Scrollable Shift Date Pills -->
+      <div class="shift-chips-scroll" id="availableDatesList" role="tablist">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <!-- MAIN RECEIPT DISPLAY (Swipeable on touch screens) -->
+    <main class="receipt-scene">
+      <div class="receipt-container" id="receiptCard">
+        <!-- Receipt Paper -->
+        <div class="receipt-paper" id="receiptPaperArea">
+          <!-- Header -->
+          <div class="receipt-header">
+            <h1 class="receipt-title">Дневник смен</h1>
+            <div class="receipt-date" id="receiptDate">01.10.2026</div>
+          </div>
+
+          <!-- Trip Items -->
+          <div class="receipt-trips" id="receiptTripsList">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Divider -->
+          <div class="receipt-divider"></div>
+
+          <!-- Summary Breakdown -->
+          <div class="receipt-summary">
+            <div class="receipt-row">
+              <span class="row-left">Поездок</span>
+              <span class="row-right font-bold" id="receiptTotalTrips">2</span>
+            </div>
+            <div class="receipt-row">
+              <span class="row-left">Выручка</span>
+              <span class="row-right" id="receiptTotalGross">3 900 ₸</span>
+            </div>
+            <div class="receipt-row">
+              <span class="row-left">Комиссия</span>
+              <span class="row-right" id="receiptTotalComm">-585 ₸</span>
+            </div>
+            <div class="receipt-row">
+              <span class="row-left">Наличные / карта</span>
+              <span class="row-right" id="receiptCashCard">1 500 / 2 400</span>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="receipt-divider"></div>
+
+          <!-- Final Take-home (На руки) -->
+          <div class="receipt-total-row">
+            <span class="total-label">На руки</span>
+            <span class="total-value" id="receiptNetIncome">3 315 ₸</span>
+          </div>
+        </div>
+
+        <!-- Scalloped Perforated Sawtooth Bottom -->
+        <div class="receipt-teeth" aria-hidden="true"></div>
+      </div>
+
+      <!-- Mobile gesture helper -->
+      <div class="swipe-hint" aria-hidden="true">
+        <span>‹ Свайп для переключения дня ›</span>
+      </div>
+
+      <!-- Quick Links below receipt -->
+      <div class="receipt-bottom-actions">
+        <a href="/docs" target="_blank" class="bottom-link">Swagger API</a>
+        <span class="dot-sep">•</span>
+        <a href="/api/receipt" target="_blank" id="rawReceiptLink" class="bottom-link">Текстовый чек</a>
+        <span class="dot-sep">•</span>
+        <button id="resetDataBtn" class="link-btn">Сбросить данные</button>
+      </div>
+    </main>
+
+    <!-- MOBILE STICKY BOTTOM BAR (Always reachable with thumb) -->
+    <div class="mobile-bottom-bar">
+      <button id="openAddModalBtnMobile" class="btn btn-primary btn-fab">
+        <span class="fab-icon">➕</span>
+        <span class="fab-text">Новая поездка</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal / Mobile Bottom Sheet: Add Trip -->
+  <div id="addTripModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card bottom-sheet">
+      <div class="sheet-drag-handle" aria-hidden="true"></div>
+
+      <div class="modal-header">
+        <h3 id="modalTitle">➕ Новая поездка</h3>
+        <button id="closeModalBtn" class="modal-close" aria-label="Закрыть">&times;</button>
+      </div>
+
+      <form id="addTripForm" novalidate>
+        <div id="formAlert" class="alert hidden" role="alert"></div>
+
+        <!-- Payment Selector (Large touch buttons) -->
+        <div class="form-group">
+          <label class="label-block">Оплата <span class="req">*</span></label>
+          <div class="payment-selector">
+            <label class="payment-option">
+              <input type="radio" name="tripPayment" value="card" checked>
+              <span class="option-pill">💳 Карта</span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="tripPayment" value="cash">
+              <span class="option-pill">💵 Наличные</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Amount with Quick Presets -->
+        <div class="form-group">
+          <label for="tripAmount">Сумма заказа <span id="formCurrLabel">(₸)</span> <span class="req">*</span></label>
+          <input type="number" id="tripAmount" min="1" step="any" inputmode="decimal" placeholder="например 2400" required class="input-field input-lg">
+          <div id="amountValidationMsg" class="field-error hidden">Сумма должна быть строго больше 0!</div>
+
+          <!-- Quick Amount Buttons for 1-Tap Entry on Phone -->
+          <div class="quick-amounts">
+            <button type="button" class="quick-amt-btn" onclick="addAmountPreset(500)">+500</button>
+            <button type="button" class="quick-amt-btn" onclick="addAmountPreset(1000)">+1 000</button>
+            <button type="button" class="quick-amt-btn" onclick="addAmountPreset(1500)">+1 500</button>
+            <button type="button" class="quick-amt-btn" onclick="addAmountPreset(2000)">+2 000</button>
+          </div>
+        </div>
+
+        <!-- Times: Start & End -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tripStart">Начало <span class="req">*</span></label>
+            <input type="datetime-local" id="tripStart" required class="input-field">
+          </div>
+          <div class="form-group">
+            <label for="tripEnd">Окончание <span class="req">*</span></label>
+            <input type="datetime-local" id="tripEnd" required class="input-field">
+          </div>
+        </div>
+        <div id="timeValidationMsg" class="field-error hidden">Окончание должно быть позже начала!</div>
+
+        <!-- Commission & ID (Accordion / Collapsible or Clean) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tripCommission">Комиссия <span class="text-muted">(авто 15%)</span></label>
+            <input type="number" id="tripCommission" min="0" step="any" inputmode="decimal" placeholder="360" class="input-field">
+          </div>
+          <div class="form-group">
+            <label for="tripId">ID поездки <span class="text-muted">(опц.)</span></label>
+            <input type="text" id="tripId" placeholder="авто (напр. t3)" class="input-field">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="cancelModalBtn" class="btn btn-secondary btn-lg">Отмена</button>
+          <button type="submit" id="submitTripBtn" class="btn btn-primary btn-lg flex-1">
+            Сохранить поездку
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
