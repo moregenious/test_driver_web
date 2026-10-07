@@ -2,6 +2,11 @@
 
 Веб-приложение и REST API для водителей такси и курьеров: быстрый учет смен, расчет комиссии сервиса/парка, общей выручки и дохода **«на руки»**, с разделением по способам оплаты (наличные и банковская карта).
 
+> ### 📱 Репозитории всей экосистемы проекта:
+> - 🌐 **Web & REST API (текущий репозиторий):** [https://github.com/moregenious/test_driver_web](https://github.com/moregenious/test_driver_web)
+> - 🤖 **Android-приложение (Kotlin, Android Studio):** [https://github.com/moregenious/Test_driver_dor_android](https://github.com/moregenious/Test_driver_dor_android)
+> - 🍏 **iOS-приложение (SwiftUI, Xcode):** [https://github.com/moregenious/test_driver_for_ios](https://github.com/moregenious/test_driver_for_ios)
+
 ---
 
 ## 🏗 Архитектура решения
